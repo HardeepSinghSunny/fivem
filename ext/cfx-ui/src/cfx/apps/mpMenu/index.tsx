@@ -29,7 +29,6 @@ import { MpMenuLocalhostServerService, registerMpMenuLocalhostServerService } fr
 import { IPlatformStatusService, registerPlatformStatusService } from './services/platformStatus/platformStatus.service';
 import { IActivityService, registerActivityService } from 'cfx/common/services/activity/activity.service';
 import { mpMenu } from './mpMenu';
-import { MatomoAnalyticsProvider } from 'cfx/common/services/analytics/providers/matomo';
 import { IServersService } from 'cfx/common/services/servers/servers.service';
 import { IUiService } from 'cfx/common/services/ui/ui.service';
 import { IIntlService } from 'cfx/common/services/intl/intl.service';
@@ -37,6 +36,7 @@ import { ISettingsService, ISettingsUIService } from 'cfx/common/services/settin
 import { IServersBoostService } from 'cfx/common/services/servers/serversBoost.service';
 import { IServersStorageService } from 'cfx/common/services/servers/serversStorage.service';
 import { IServersConnectService } from 'cfx/common/services/servers/serversConnect.service';
+import { GTMAnalyticsProvider } from 'cfx/common/services/analytics/providers/gtm';
 import { Handle404 } from './pages/404';
 import { registerHomeScreenServerList } from './services/servers/list/HomeScreenServerList.service';
 import { registerSentryService } from './services/sentry/sentry.service';
@@ -55,7 +55,7 @@ startBrowserApp({
     ]);
 
     registerAnalyticsService(container, [
-      MatomoAnalyticsProvider,
+      GTMAnalyticsProvider,
     ]);
 
     registerLegalService(container);

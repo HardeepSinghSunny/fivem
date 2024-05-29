@@ -150,6 +150,7 @@ workspace "CitizenMP"
 		defines { "GTEST_HAS_PTHREAD=0", "BOOST_ALL_NO_LIB" }
  		defines { "BOOST_NULLPTR=nullptr" }
 		defines { "_HAS_AUTO_PTR_ETC" } -- until boost gets fixed
+		defines { "_PPLTASK_ASYNC_LOGGING=0"}
 
 	filter {}
 
@@ -631,6 +632,14 @@ if _OPTIONS['game'] ~= 'launcher' then
 			'client/clrcore-v2/Math/Vector2.cs',
 			'client/clrcore-v2/Math/Vector3.cs',
 			'client/clrcore-v2/Math/Vector4.cs',
+		}
+		
+		-- Add MsgPack source files directly, otherwise we'd get a cyclic dependency
+		files { '../vendor/msgpack-cs/MsgPack/**.cs' }
+		removefiles {
+			'../vendor/msgpack-cs/MsgPack/AssemblyInfo.cs',
+			'../vendor/msgpack-cs/MsgPack/PlatformTypes/**',
+			'../vendor/msgpack-cs/MsgPack/obj/**', -- allows working in the submodule
 		}
 		
 		defines { 'MONO_V2' }

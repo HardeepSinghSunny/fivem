@@ -55,68 +55,6 @@ static std::set<std::string> g_managedResources = {
 	"monitor"
 };
 
-static void HandleServerEvent(fx::ServerInstanceBase* instance, const fx::ClientSharedPtr& client, net::Buffer& buffer)
-{
-	uint16_t eventNameLength = buffer.Read<uint16_t>();
-
-	// validate input
-	if (eventNameLength <= 0 || eventNameLength > std::numeric_limits<uint16_t>::max())
-	{
-		return;
-	}
-
-	static fx::RateLimiterStore<uint32_t, false> netEventRateLimiterStore{ instance->GetComponent<console::Context>().GetRef() };
-	static auto netEventRateLimiter = netEventRateLimiterStore.GetRateLimiter("netEvent", fx::RateLimiterDefaults{ 50.f, 200.f });
-	static auto netFloodRateLimiter = netEventRateLimiterStore.GetRateLimiter("netEventFlood", fx::RateLimiterDefaults{ 75.f, 300.f });
-	static auto netEventSizeRateLimiter = netEventRateLimiterStore.GetRateLimiter("netEventSize", fx::RateLimiterDefaults{ 128 * 1024.0, 384 * 1024.0 });
-
-	uint32_t netId = client->GetNetId();
-
-	if (!netEventRateLimiter->Consume(netId))
-	{
-		if (!netFloodRateLimiter->Consume(netId))
-		{
-			gscomms_execute_callback_on_main_thread([client, instance]()
-			{
-				instance->GetComponent<fx::GameServer>()->DropClient(client, "Reliable network event overflow.");
-			});
-		}
-
-		return;
-	}
-
-	std::vector<char> eventNameBuffer(eventNameLength - 1);
-	buffer.Read(eventNameBuffer.data(), eventNameBuffer.size());
-	buffer.Read<uint8_t>();
-
-	uint32_t dataLength = buffer.GetRemainingBytes();
-
-	if (!netEventSizeRateLimiter->Consume(netId, double(dataLength)))
-	{
-		std::string eventName(eventNameBuffer.begin(), eventNameBuffer.end());
-		gscomms_execute_callback_on_main_thread([client, instance, eventName]()
-		{
-			// if this happens, try increasing rateLimiter_netEventSize_rate and rateLimiter_netEventSize_burst
-			// preferably, fix client scripts to not have this large a set of events with high frequency
-			instance->GetComponent<fx::GameServer>()->DropClient(client, "Reliable network event size overflow: %s", eventName);
-		});
-
-		return;
-	}
-
-	std::vector<uint8_t> data(dataLength);
-	buffer.Read(data.data(), data.size());
-
-	fwRefContainer<fx::ResourceManager> resourceManager = instance->GetComponent<fx::ResourceManager>();
-	fwRefContainer<fx::ResourceEventManagerComponent> eventManager = resourceManager->GetComponent<fx::ResourceEventManagerComponent>();
-
-	eventManager->QueueEvent(
-		std::string(eventNameBuffer.begin(), eventNameBuffer.end()),
-		std::string(data.begin(), data.end()),
-		fmt::sprintf("net:%d", netId)
-	);
-}
-
 static void CheckResourceGlobs(fx::Resource* resource, int* numWarnings)
 {
 	auto metaDataComponent = resource->GetComponent<fx::ResourceMetaDataComponent>();
@@ -422,6 +360,7 @@ static InitFunction initFunction([]()
 
 		instance->GetComponent<fx::ClientRegistry>()->OnClientCreated.Connect([rac](const fx::ClientSharedPtr& client)
 		{
+			//TODO: improve client to use smart pointer and not unsafe ptr
 			fx::Client* unsafeClient = client.get();
 			unsafeClient->OnAssignNetId.Connect([rac, unsafeClient]()
 			{
@@ -803,9 +742,10 @@ static InitFunction initFunction([]()
 			ScanResources(instance);
 		});
 
-		instance->GetComponent<console::Context>()->GetCommandManager()->FallbackEvent.Connect([=](const std::string& commandName, const ProgramArguments& arguments, const std::string& context)
+		instance->GetComponent<console::Context>()->GetCommandManager()->FallbackEvent.Connect([](const std::string& commandName, const ProgramArguments& arguments, const std::string& context)
 		{
-			auto eventComponent = resman->GetComponent<fx::ResourceEventManagerComponent>();
+			auto resourceManager = fx::ResourceManager::GetCurrent();
+			auto eventComponent = resourceManager->GetComponent<fx::ResourceEventManagerComponent>();
 
 			// assert privilege
 			if (!seCheckPrivilege(fmt::sprintf("command.%s", commandName)))
@@ -817,88 +757,7 @@ static InitFunction initFunction([]()
 			return (eventComponent->TriggerEvent2("rconCommand", {}, commandName, arguments.GetArguments()));
 		}, -100);
 
-		static std::string rawCommand;
-
-		instance->GetComponent<console::Context>()->GetCommandManager()->FallbackEvent.Connect([=](const std::string& commandName, const ProgramArguments& arguments, const std::string& context)
-		{
-			if (!context.empty())
-			{
-				auto eventComponent = resman->GetComponent<fx::ResourceEventManagerComponent>();
-
-				try
-				{
-					return eventComponent->TriggerEvent2("__cfx_internal:commandFallback", { "internal-net:" + context }, rawCommand);
-				}
-				catch (std::bad_any_cast& e)
-				{
-					trace("caught bad_any_cast in FallbackEvent handler for %s\n", commandName);
-				}
-			}
-
-			return true;
-		}, 99999);
-
 		auto gameServer = instance->GetComponent<fx::GameServer>();
-		gameServer->GetComponent<fx::HandlerMapComponent>()->Add(HashRageString("msgServerEvent"), std::bind(&HandleServerEvent, instance, std::placeholders::_1, std::placeholders::_2));
-
-		gameServer->GetComponent<fx::HandlerMapComponent>()->Add(HashRageString("msgServerCommand"), [=](const fx::ClientSharedPtr& client, net::Buffer& buffer)
-		{
-			static fx::RateLimiterStore<uint32_t, false> netEventRateLimiterStore{ instance->GetComponent<console::Context>().GetRef() };
-			static auto netEventRateLimiter = netEventRateLimiterStore.GetRateLimiter("netCommand", fx::RateLimiterDefaults{ 7.f, 14.f });
-			static auto netFloodRateLimiter = netEventRateLimiterStore.GetRateLimiter("netCommandFlood", fx::RateLimiterDefaults{ 25.f, 45.f });
-
-			uint32_t netId = client->GetNetId();
-
-			if (!netEventRateLimiter->Consume(netId))
-			{
-				if (!netFloodRateLimiter->Consume(netId))
-				{
-					gscomms_execute_callback_on_main_thread([client, instance]()
-					{
-						instance->GetComponent<fx::GameServer>()->DropClient(client, "Reliable server command overflow.");
-					});
-				}
-
-				return;
-			}
-
-			auto cmdLen = buffer.Read<uint16_t>();
-
-			std::vector<char> cmd(cmdLen);
-			buffer.Read(cmd.data(), cmdLen);
-
-			std::string printString;
-
-			fx::PrintListenerContext context([&printString](std::string_view print)
-			{
-				printString += print;
-			});
-
-			fx::PrintFilterContext filterContext([&client](ConsoleChannel& channel, std::string_view print)
-			{
-				channel = fmt::sprintf("forward:%d/%s", client->GetNetId(), channel);
-			});
-
-			fx::ScopeDestructor destructor([&]()
-			{
-				msgpack::sbuffer sb;
-
-				msgpack::packer<msgpack::sbuffer> packer(sb);
-				packer.pack_array(1).pack(printString);
-
-				instance->GetComponent<fx::ServerEventComponent>()->TriggerClientEvent("__cfx_internal:serverPrint", sb.data(), sb.size(), { std::to_string(client->GetNetId()) });
-			});
-
-			// save the raw command for fallback usage
-			rawCommand = std::string(cmd.begin(), cmd.end());
-
-			// invoke
-			auto consoleCxt = instance->GetComponent<console::Context>();
-			consoleCxt->GetCommandManager()->Invoke(rawCommand, std::to_string(client->GetNetId()));
-
-			// unset raw command
-			rawCommand = "";
-		});
 
 		gameServer->OnTick.Connect([=]()
 		{
