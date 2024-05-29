@@ -86,15 +86,16 @@ jobs:
     
     
     - if: matrix.build-mode == 'manual'
-      run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
-        exit
+      uses: .github/workflows/ci_build.yml@master
+      # run: |
+      #   echo 'If you are using a "manual" build mode for one or more of the' \
+      #     'languages you are analyzing, replace this with the commands to build' \
+      #     'your code, for example:'
+      #   echo '  make bootstrap'
+      #   echo '  make release'
+      #   exit
         
-        - name: Perform CodeQL Analysis
-          uses: github/codeql-action/analyze@v3
-          with:
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
           category: "/language:${{matrix.language}}"
