@@ -85,8 +85,7 @@ jobs:
    
     
     
-    - if: matrix.build-mode == 'manual'
-      uses: .github/workflows/ci_build.yml@master
+    # - if: matrix.build-mode == 'manual'      
       # run: |
       #   echo 'If you are using a "manual" build mode for one or more of the' \
       #     'languages you are analyzing, replace this with the commands to build' \
