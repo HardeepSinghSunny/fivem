@@ -94,9 +94,9 @@ jobs:
       #   echo '  make release'
       #   exit
 
-    - name: Build Cpp code 
-      if: matrix.build-mode == 'manual'
-      uses: github/workflows/ci/build_linux.sh@master
+    # - name: Build Cpp code 
+    #   if: matrix.build-mode == 'manual'
+    #   uses: github/workflows/ci/build_linux.sh@master
       
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
