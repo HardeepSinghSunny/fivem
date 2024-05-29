@@ -29,7 +29,7 @@ jobs:
     #   - https://gh.io/using-larger-runners (GitHub.com only)
     # Consider using larger runners or machines with greater resources for possible analysis time improvements.
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
-    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+   
     permissions:
       # required for all workflows
       security-events: write
@@ -82,28 +82,19 @@ jobs:
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
    
-    - name: Read build command from YAML
-      id: read_build_command
-      run: |
-          echo "::set-output name=build_command::$(cat ci_build.yml | shyaml get-value build_command)"
-
+   
+    
+    
     - if: matrix.build-mode == 'manual'
       run: |
-          mkdir build
-          cd build
-          ${{ steps.read_build_command.outputs.build_command }}
-    
-    
- #   - if: matrix.build-mode == 'manual'
- #     run: |
- #       echo 'If you are using a "manual" build mode for one or more of the' \
-#          'languages you are analyzing, replace this with the commands to build' \
-#          'your code, for example:'
- #       echo '  make bootstrap'
- #       echo '  make release'
- #       exit 1
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
+        echo 'If you are using a "manual" build mode for one or more of the' \
+          'languages you are analyzing, replace this with the commands to build' \
+          'your code, for example:'
+        echo '  make bootstrap'
+        echo '  make release'
+        exit
+        
+        - name: Perform CodeQL Analysis
+          uses: github/codeql-action/analyze@v3
+          with:
+          category: "/language:${{matrix.language}}"
