@@ -28,8 +28,8 @@ jobs:
     #   - https://gh.io/supported-runners-and-hardware-resources
     #   - https://gh.io/using-larger-runners (GitHub.com only)
     # Consider using larger runners or machines with greater resources for possible analysis time improvements.
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
-   
+    # runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    runs-on: [ubuntu-20.04]
     permissions:
       # required for all workflows
       security-events: write
@@ -94,9 +94,9 @@ jobs:
       #   echo '  make release'
       #   exit
 
-    # - name: Build Cpp code 
-    #   if: matrix.build-mode == 'manual'
-    #   uses: github/workflows/ci/build_linux.sh@master
+    - name: Build Cpp code 
+      if: matrix.build-mode == 'manual'
+      uses: github/workflows/ci/build_linux.sh@master
       
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
