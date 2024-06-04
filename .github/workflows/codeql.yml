@@ -92,7 +92,8 @@ jobs:
         echo '  make bootstrap'
         echo '  make release'
         exit
-
+    - name: Display build-tracer logs
+      run: type D:\a\_temp\codeql_databases\log\build-tracer.log
     # - name: Build Cpp code 
     #   if: matrix.build-mode == 'manual'
     #   uses: github/workflows/ci/build_linux.sh@master
