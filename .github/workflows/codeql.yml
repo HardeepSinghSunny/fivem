@@ -29,7 +29,8 @@ jobs:
     #   - https://gh.io/using-larger-runners (GitHub.com only)
     # Consider using larger runners or machines with greater resources for possible analysis time improvements.
     # runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
-    runs-on: [ubuntu-20.04]
+    #runs-on: [ubuntu-20.04]
+    runs-on: ['windows-latest']
     permissions:
       # required for all workflows
       security-events: write
@@ -85,14 +86,12 @@ jobs:
    
     
     
-    # - if: matrix.build-mode == 'manual'      
-      # run: |
-      #   echo 'If you are using a "manual" build mode for one or more of the' \
-      #     'languages you are analyzing, replace this with the commands to build' \
-      #     'your code, for example:'
-      #   echo '  make bootstrap'
-      #   echo '  make release'
-      #   exit
+    - if: matrix.build-mode == 'manual'      
+      run: |
+        echo "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -p:RestorePackagesConfig=true -p:preferredtoolarchitecture=x64 -p:configuration=release -maxcpucount:4 -v:q -fl1 "-flp1:logfile=errors.log;errorsonly" MSBUILD_ERROR=$?
+        echo '  make bootstrap'
+        echo '  make release'
+        exit
 
     # - name: Build Cpp code 
     #   if: matrix.build-mode == 'manual'
