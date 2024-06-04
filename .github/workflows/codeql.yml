@@ -92,6 +92,7 @@ jobs:
         echo "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -property:RestorePackagesConfig=true -property:preferredtoolarchitecture=x64 -property:configuration=release -maxcpucount:4 -v -fl1 "-flp1:logfile=errors.log;errorsonly" MSBUILD_ERROR=$?
         echo '  make bootstrap'
         echo '  make release'
+        type D:\a\_temp\codeql_databases\log\build-tracer.log
         exit
     # - name: Display build-tracer logs
     #   run: type D:\a\_temp\codeql_databases\log\build-tracer.log
