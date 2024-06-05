@@ -83,22 +83,25 @@ jobs:
     # to build your code.
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
-   
-   
+
     
-    
-    - if: matrix.build-mode == 'manual'      
+    - if: matric.build-mode == 'manual'
       run: |
-        echo "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -property:RestorePackagesConfig=true -property:preferredtoolarchitecture=x64 -property:configuration=release -maxcpucount:4 -v -fl1 "-flp1:logfile=errors.log;errorsonly" MSBUILD_ERROR=$?
-        echo '  make bootstrap'
-        echo '  make release'
-        type D:\a\_temp\codeql_databases\log\build-tracer.log
-        exit
-    # - name: Display build-tracer logs
-    #   run: type D:\a\_temp\codeql_databases\log\build-tracer.log
-    # - name: Build Cpp code 
-    #   if: matrix.build-mode == 'manual'
-    #   uses: github/workflows/ci/build_linux.sh@master
+       .\fxd get-chrome
+       .\prebuild.cmd
+       .\fxd gen -game five
+       cd code\build\five
+       "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -p:RestorePackagesConfig=true -p:preferredtoolarchitecture=x64 -p:configuration=release -maxcpucount:4
+       exit
+    
+    # - if: matrix.build-mode == 'manual'      
+    #   run: |
+    #     echo "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -property:RestorePackagesConfig=true -property:preferredtoolarchitecture=x64 -property:configuration=release -maxcpucount:4 -v -fl1 "-flp1:logfile=errors.log;errorsonly" MSBUILD_ERROR=$?
+    #     echo '  make bootstrap'
+    #     echo '  make release'
+    #     type D:\a\_temp\codeql_databases\log\build-tracer.log
+    #     exit
+  
       
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
