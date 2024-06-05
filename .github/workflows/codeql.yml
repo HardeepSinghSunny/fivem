@@ -90,8 +90,8 @@ jobs:
        .\fxd get-chrome
        .\prebuild.cmd
        .\fxd gen -game five
-     #  cd code\build\five
-       "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -property:RestorePackagesConfig=true -property:preferredtoolarchitecture=x64 -property:configuration=release -maxcpucount:4
+       cd code\build\five
+       "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" "CitizenMP.sln" -t:build -restore -property:RestorePackagesConfig=true -property:preferredtoolarchitecture=x64 -property:configuration=release -maxcpucount:4
        exit
 
 
