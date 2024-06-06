@@ -89,6 +89,7 @@ jobs:
       if: matrix.build-mode == 'manual'
       shell: bash
       run: |
+        git submodule update --jobs=16 --init --depth=1
         pwsh ./fxd.ps1 get-chrome
         ./prebuild.cmd
         pwsh ./fxd.ps1 gen -game five       
