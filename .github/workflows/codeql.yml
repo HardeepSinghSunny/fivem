@@ -17,8 +17,8 @@ on:
   #   branches: [ "master" ]
   # pull_request:
   #   branches: [ "master" ]
-  # schedule:
-  #   - cron: '20 16 * * 2'
+  schedule:
+      - cron: '20 16 * * 2'
 
 jobs:
   analyze:
@@ -44,7 +44,7 @@ jobs:
       matrix:
         include:
         - language: c-cpp
-          build-mode: manual
+          build-mode: autobuild
         - language: csharp
           build-mode: autobuild
         - language: javascript-typescript
@@ -68,15 +68,15 @@ jobs:
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
 
     
-    - name: Manual build Cpp
-      if: matrix.build-mode == 'manual'
-      shell: bash
-      run: |
-        git submodule update --jobs=16 --init --depth=1
-        pwsh ./fxd.ps1 get-chrome
-        ./prebuild.cmd
-        pwsh ./fxd.ps1 gen -game five       
-        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" ".\code\build\five\CitizenMP.sln" -t:build -restore -property:RestorePackagesConfig=true -property:preferredtoolarchitecture=x64 -property:configuration=release -maxCpuCount:4
+    # - name: Manual build Cpp
+    #   if: matrix.build-mode == 'manual'
+    #   shell: bash
+    #   run: |
+    #     git submodule update --jobs=16 --init --depth=1
+    #     pwsh ./fxd.ps1 get-chrome
+    #     ./prebuild.cmd
+    #     pwsh ./fxd.ps1 gen -game five       
+    #     "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" ".\code\build\five\CitizenMP.sln" -t:build -restore -property:RestorePackagesConfig=true -property:preferredtoolarchitecture=x64 -property:configuration=release -maxCpuCount:4
         
 
     
